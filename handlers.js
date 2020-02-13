@@ -56,10 +56,49 @@ async function createVolumeMessage(coinId) {
         throw 'fetch error'
     const coin = response.data
     const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
-        "Volume\t: €" + coin.market_data.market_cap.eur + "\n"
+        "Volume\t: €" + coin.market_data.total_volume.eur + "\n"
     return message
 }
 
+async function createMarketCapMessage(coinId) {
+    const response = await CoinGeckoClient.coins.fetch(coinId, {
+        localization: false,
+        tickers: false,
+        community_data: false,
+        developer_data: false,
+        sparkline: false
+    })
+    if (!response.success)
+        throw 'fetch error'
+    const coin = response.data
+    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+        "Market Cap\t: €" + coin.market_data.market_cap.eur + "\n"
+    return message
+}
+
+async function createDevMessage(coinId) {
+    const response = await CoinGeckoClient.coins.fetch(coinId, {
+        localization: false,
+        tickers: false,
+        market_data: false,
+        community_data: false,
+        developer_data: true,
+        sparkline: false
+    })
+    if (!response.success)
+        throw 'fetch error'
+    const coin = response.data
+    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+        "Forks\t: " + coin.developer_data.forks + '\n' +
+        "Stars\t: " + coin.developer_data.stars + '\n' +
+        "Subscribers\t: " + coin.developer_data.subscribers + '\n' +
+        "Total Issues\t: " + coin.developer_data.total_issues + '\n' +
+        "Closed Issued\t: " + coin.developer_data.closed_issues + '\n' +
+        "PR Merged\t: " + coin.developer_data.pull_requests_merged + '\n' +
+        "PR Contributors\t: " + coin.developer_data.pull_request_contributors + '\n' +
+        "4-wk Commit\t: " + coin.developer_data.commit_count_4_weeks
+    return message
+}
 
 async function generatePriceMessages(coins) {
     let messages = [];
@@ -89,6 +128,34 @@ async function generateVolumeMessages(coins) {
     return messages
 }
 
+async function generateMarketCapMessages(coins) {
+    let messages = [];
+    for (const coin of coins) {
+        const ids = await getIds(coin)
+        if (ids === undefined || ids.length == 0) {
+            messages.push(Promise.resolve("No coins found with: " + coin))
+        }
+        for (const id of ids) {
+            messages.push(createMarketCapMessage(id))
+        }
+    }
+    return messages
+}
+
+async function generateDevMessages(coins) {
+    let messages = [];
+    for (const coin of coins) {
+        const ids = await getIds(coin)
+        if (ids === undefined || ids.length == 0) {
+            messages.push(Promise.resolve("No coins found with: " + coin))
+        }
+        for (const id of ids) {
+            messages.push(createDevMessage(id))
+        }
+    }
+    return messages
+}
+
 function generateStartMessage() {
     const message = "Hi! I'm GeckoBot! You can ask me crypto questions like: \n\n" +
         "*Commands*\n" +
@@ -99,4 +166,6 @@ function generateStartMessage() {
 
 module.exports.generatePriceMessages = generatePriceMessages
 module.exports.generateVolumeMessages = generateVolumeMessages
+module.exports.generateMarketCapMessages = generateMarketCapMessages
+module.exports.generateDevMessages = generateDevMessages
 module.exports.generateStartMessage = generateStartMessage

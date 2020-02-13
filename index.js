@@ -2,6 +2,12 @@ const Bot = require('keybase-bot')
 const Gecko = require('./handlers');
 
 const bot = new Bot()
+const BOT_PREFIX = "coingecko"
+const PRICE_COMMAND = "price"
+const START_COMMAND = "start"
+const VOLUME_COMMAND = "volume"
+const MARKETCAP_COMMAND = "marketcap"
+const DEV_COMMAND = "dev"
 
 async function main() {
   try {
@@ -16,19 +22,29 @@ async function main() {
       advertisements: [{
         type: 'public',
         commands: [{
-            name: 'price',
+            name: BOT_PREFIX + ' ' + PRICE_COMMAND,
             description: 'Sends the price information about the coin.',
-            usage: '[!cg p coin_name]',
+            usage: '[!' + BOT_PREFIX + ' ' + PRICE_COMMAND + ' coin_name]',
           },
           {
-            name: 'start',
+            name: BOT_PREFIX + ' ' + START_COMMAND,
             description: 'Main menu.',
-            usage: '[!cg start]',
+            usage: '[!' + BOT_PREFIX + ' ' + START_COMMAND + ']',
           },
           {
-            name: 'volume',
+            name: BOT_PREFIX + ' ' + VOLUME_COMMAND,
             description: "Coin's trading Volume",
-            usage: '[!cg v coin_name]',
+            usage: '[!' + BOT_PREFIX + ' ' + VOLUME_COMMAND + ' coin_name]',
+          },
+          {
+            name: BOT_PREFIX + ' ' + MARKETCAP_COMMAND,
+            description: "Coin's market cap",
+            usage: '[!' + BOT_PREFIX + ' ' + MARKETCAP_COMMAND + ' coin_name]',
+          },
+          {
+            name: BOT_PREFIX + ' ' + DEV_COMMAND,
+            description: "Coin's development stats",
+            usage: '[!' + BOT_PREFIX + ' ' + DEV_COMMAND + ' coin_name]',
           },
         ]
       }],
@@ -43,17 +59,17 @@ async function main() {
       const body = messageIn.content.text.body
       const words = body.split(' ')
       const [prefix, verb, ...symbols] = words
-      if (prefix !== "!cg") {
+      if (prefix !== '!' + BOT_PREFIX) {
         return
       }
       console.log("verb: " + verb)
       switch (verb) {
-        case 'start':
+        case START_COMMAND:
           bot.chat.send(messageIn.channel, {
             body: Gecko.generateStartMessage()
           })
           return
-        case 'p':
+        case PRICE_COMMAND:
           messages = await Gecko.generatePriceMessages(symbols)
           for (const message of messages) {
             bot.chat.send(messageIn.channel, {
@@ -61,7 +77,7 @@ async function main() {
             })
           }
           return
-        case 'v':
+        case VOLUME_COMMAND:
           messages = await Gecko.generateVolumeMessages(symbols)
           for (const message of messages) {
             bot.chat.send(messageIn.channel, {
@@ -69,8 +85,26 @@ async function main() {
             })
           }
           return
+        case MARKETCAP_COMMAND:
+          messages = await Gecko.generateMarketCapMessages(symbols)
+          for (const message of messages) {
+            bot.chat.send(messageIn.channel, {
+              body: await message
+            })
+          }
+          return
+        case DEV_COMMAND:
+          messages = await Gecko.generateDevMessages(symbols)
+          for (const message of messages) {
+            bot.chat.send(messageIn.channel, {
+              body: await message
+            })
+          }
+          return
         default:
-          throw new Error(`Unknown command ${body}.`)
+          bot.chat.send(messageIn.channel, {
+            body: 'Unknown command: ' + verb
+          })
       }
     }
 
