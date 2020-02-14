@@ -8,6 +8,7 @@ const START_COMMAND = "start"
 const VOLUME_COMMAND = "volume"
 const MARKETCAP_COMMAND = "marketcap"
 const DEV_COMMAND = "dev"
+const ROI_COMMAND = "roi"
 
 async function main() {
   try {
@@ -45,6 +46,11 @@ async function main() {
             name: BOT_PREFIX + ' ' + DEV_COMMAND,
             description: "Coin's development stats",
             usage: '[!' + BOT_PREFIX + ' ' + DEV_COMMAND + ' coin_name]',
+          },
+          {
+            name: BOT_PREFIX + ' ' + ROI_COMMAND,
+            description: "ICO's Return On Investment",
+            usage: '[!' + BOT_PREFIX + ' ' + ROI_COMMAND + ' coin_name]',
           },
         ]
       }],
@@ -95,6 +101,14 @@ async function main() {
           return
         case DEV_COMMAND:
           messages = await Gecko.generateDevMessages(symbols)
+          for (const message of messages) {
+            bot.chat.send(messageIn.channel, {
+              body: await message
+            })
+          }
+          return
+        case ROI_COMMAND:
+          messages = await Gecko.generateROIMessages(symbols)
           for (const message of messages) {
             bot.chat.send(messageIn.channel, {
               body: await message

@@ -30,7 +30,7 @@ async function createPriceMessage(coinId) {
     if (!response.success)
         throw 'fetch error'
     const coin = response.data
-    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+    const message = "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n" +
         "EUR\t: €" + coin.market_data.current_price.eur + "\n" +
         "USD\t: $" + coin.market_data.current_price.usd + "\n" +
         "BTC\t: ฿" + coin.market_data.current_price.btc + "\n" +
@@ -55,7 +55,7 @@ async function createVolumeMessage(coinId) {
     if (!response.success)
         throw 'fetch error'
     const coin = response.data
-    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+    const message = "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n" +
         "Volume\t: €" + coin.market_data.total_volume.eur + "\n"
     return message
 }
@@ -71,9 +71,27 @@ async function createMarketCapMessage(coinId) {
     if (!response.success)
         throw 'fetch error'
     const coin = response.data
-    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+    const message = "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n" +
         "Market Cap\t: €" + coin.market_data.market_cap.eur + "\n"
     return message
+}
+
+async function createROIMessage(coinId) {
+    const response = await CoinGeckoClient.coins.fetch(coinId, {
+        localization: false,
+        tickers: false,
+        community_data: false,
+        developer_data: false,
+        sparkline: false
+    })
+    if (!response.success)
+        throw 'fetch error'
+    const coin = response.data
+    const message = "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n"
+    if (coin.market_data.roi)
+        return message + "ROI\t: " + coin.market_data.roi.times.toFixed(5) + "x " + coin.market_data.roi.currency.toUpperCase() + "\n"
+    else
+        return message + "No ROI data for this coin"
 }
 
 async function createDevMessage(coinId) {
@@ -88,7 +106,7 @@ async function createDevMessage(coinId) {
     if (!response.success)
         throw 'fetch error'
     const coin = response.data
-    const message = "*" + coin.name + " | " + coin.symbol + "*\n\n" +
+    const message = "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n" +
         "Forks\t: " + coin.developer_data.forks + '\n' +
         "Stars\t: " + coin.developer_data.stars + '\n' +
         "Subscribers\t: " + coin.developer_data.subscribers + '\n' +
@@ -156,6 +174,20 @@ async function generateDevMessages(coins) {
     return messages
 }
 
+async function generateROIMessages(coins) {
+    let messages = [];
+    for (const coin of coins) {
+        const ids = await getIds(coin)
+        if (ids === undefined || ids.length == 0) {
+            messages.push(Promise.resolve("No coins found with: " + coin))
+        }
+        for (const id of ids) {
+            messages.push(createROIMessage(id))
+        }
+    }
+    return messages
+}
+
 function generateStartMessage() {
     const message = "Hi! I'm GeckoBot! You can ask me crypto questions like: \n\n" +
         "*Commands*\n" +
@@ -168,4 +200,5 @@ module.exports.generatePriceMessages = generatePriceMessages
 module.exports.generateVolumeMessages = generateVolumeMessages
 module.exports.generateMarketCapMessages = generateMarketCapMessages
 module.exports.generateDevMessages = generateDevMessages
+module.exports.generateROIMessages = generateROIMessages
 module.exports.generateStartMessage = generateStartMessage
