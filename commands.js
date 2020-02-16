@@ -240,19 +240,21 @@ module.exports.commands = [
 
 async function forEachCoin(coins, createMessage) {
   let messages = [];
-    for (const coin of coins) {
-      if(coin != ''){
-          const ids = await getIds(coin);
-          if (ids === undefined || ids.length == 0) {
-            messages.push(Promise.resolve("No coins found with: " + coin));
-          }
-          for (const id of ids) {
-            messages.push(createMessage(id));
-          }
+  for (const coin of coins) {
+    if (coin != "") {
+      const ids = await getIds(coin);
+      if (ids === undefined || ids.length == 0) {
+        messages.push(Promise.resolve("No coins found with: " + coin));
+      }
+      for (const id of ids) {
+        messages.push(createMessage(id));
       }
     }
-    if(messages.length == 0)
-        messages.push(Promise.resolve("You need to add some coin to the command sir"))
+  }
+  if (messages.length == 0)
+    messages.push(
+      Promise.resolve("You need to add some coin to the command sir")
+    );
   return messages;
 }
 
