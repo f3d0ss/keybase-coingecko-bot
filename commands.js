@@ -1,25 +1,27 @@
-const CoinGecko = require("coingecko-api");
+const CoinGecko = require("coingecko-api")
 
-const CoinGeckoClient = new CoinGecko();
+const CoinGeckoClient = new CoinGecko()
 
-const BOT_PREFIX = "coingecko";
-const PRICE_COMMAND = "price";
-const START_COMMAND = "start";
-const VOLUME_COMMAND = "volume";
-const MARKETCAP_COMMAND = "marketcap";
-const DEV_COMMAND = "dev";
-const ROI_COMMAND = "roi";
+const BOT_PREFIX = "coingecko"
+const PRICE_COMMAND = "price"
+const START_COMMAND = "start"
+const VOLUME_COMMAND = "volume"
+const MARKETCAP_COMMAND = "marketcap"
+const DEV_COMMAND = "dev"
+const ROI_COMMAND = "roi"
+const SOCIAL_COMMAND = "social"
+const DESCRIPTION_COMMAND = "description"
 
-let allCoins;
+let allCoins
 
 async function getIds(name) {
-  let lowerName = name.toLowerCase();
-  console.log("lowerName: " + lowerName);
+  let lowerName = name.toLowerCase()
+  console.log("lowerName: " + lowerName)
   if (allCoins === undefined || allCoins.code != 200) {
-    allCoins = await CoinGeckoClient.coins.list();
+    allCoins = await CoinGeckoClient.coins.list()
   }
   if (allCoins.code != 200) {
-    throw "Get Ids:\t server error";
+    throw "Get Ids:\t server error"
   }
 
   return allCoins.data
@@ -29,7 +31,7 @@ async function getIds(name) {
         coin.symbol == lowerName ||
         coin.name == lowerName
     )
-    .map(coin => coin.id);
+    .map(coin => coin.id)
 }
 
 module.exports.commands = [
@@ -59,9 +61,9 @@ module.exports.commands = [
           community_data: false,
           developer_data: false,
           sparkline: false
-        });
-        if (!response.success) throw "fetch error";
-        const coin = response.data;
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
         const message =
           "*" +
           coin.name +
@@ -97,8 +99,8 @@ module.exports.commands = [
           "%\n" +
           "1y %\t: " +
           coin.market_data.price_change_percentage_1y +
-          "%\n\n";
-        return message;
+          "%\n\n"
+        return message
       })
   },
   {
@@ -114,9 +116,9 @@ module.exports.commands = [
           community_data: false,
           developer_data: false,
           sparkline: false
-        });
-        if (!response.success) throw "fetch error";
-        const coin = response.data;
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
         const message =
           "*" +
           coin.name +
@@ -125,8 +127,8 @@ module.exports.commands = [
           "*\n\n" +
           "Volume\t: €" +
           coin.market_data.total_volume.eur +
-          "\n";
-        return message;
+          "\n"
+        return message
       })
   },
   {
@@ -142,9 +144,9 @@ module.exports.commands = [
           community_data: false,
           developer_data: false,
           sparkline: false
-        });
-        if (!response.success) throw "fetch error";
-        const coin = response.data;
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
         const message =
           "*" +
           coin.name +
@@ -153,8 +155,8 @@ module.exports.commands = [
           "*\n\n" +
           "Market Cap\t: €" +
           coin.market_data.market_cap.eur +
-          "\n";
-        return message;
+          "\n"
+        return message
       })
   },
   {
@@ -171,9 +173,9 @@ module.exports.commands = [
           community_data: false,
           developer_data: true,
           sparkline: false
-        });
-        if (!response.success) throw "fetch error";
-        const coin = response.data;
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
         const message =
           "*" +
           coin.name +
@@ -202,8 +204,8 @@ module.exports.commands = [
           coin.developer_data.pull_request_contributors +
           "\n" +
           "4-wk Commit\t: " +
-          coin.developer_data.commit_count_4_weeks;
-        return message;
+          coin.developer_data.commit_count_4_weeks
+        return message
       })
   },
   {
@@ -219,11 +221,11 @@ module.exports.commands = [
           community_data: false,
           developer_data: false,
           sparkline: false
-        });
-        if (!response.success) throw "fetch error";
-        const coin = response.data;
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
         const message =
-          "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n";
+          "*" + coin.name + " | " + coin.symbol.toUpperCase() + "*\n\n"
         if (coin.market_data.roi)
           return (
             message +
@@ -232,30 +234,95 @@ module.exports.commands = [
             "x " +
             coin.market_data.roi.currency.toUpperCase() +
             "\n"
-          );
-        else return message + "No ROI data for this coin";
+          )
+        else return message + "No ROI data for this coin"
       })
-  }
-];
+  },
+  {
+    name: BOT_PREFIX + " " + SOCIAL_COMMAND,
+    description: "Sends the community social information about the coin.",
+    usage: "[!" + BOT_PREFIX + " " + SOCIAL_COMMAND + " coin_name]",
+    verb: SOCIAL_COMMAND,
+    generateMessages: async inputs =>
+      forEachCoin(inputs, async coinId => {
+        const response = await CoinGeckoClient.coins.fetch(coinId, {
+          localization: false,
+          tickers: false,
+          market_data: false,
+          community_data: true,
+          developer_data: false,
+          sparkline: false
+        })
+        if (!response.success) throw "fetch error"
+        const coin = response.data
+        const message =
+          "*Social Community Activity*" +
+          "*" +
+          coin.name +
+          " | " +
+          coin.symbol.toUpperCase() +
+          "*\n\n" +
+          "Facebook Likes\t: " +
+          coin.community_data.facebook_likes +
+          "\n" +
+          "Twitter Followers\t: " +
+          coin.community_data.twitter_followers +
+          "\n" +
+          "Reddit Subscribers\t: " +
+          coin.community_data.reddit_subscribers +
+          "\n\n" +
+          "Reddit Avg Posts (48h)\t: " +
+          coin.community_data.reddit_average_posts_48h +
+          "\n" +
+          "Reddit Avg Comments (48h)\t: " +
+          coin.community_data.reddit_average_comments_48h +
+          "\n" +
+          "Reddit Active Accounts (48h)\t: " +
+          coin.community_data.reddit_accounts_active_48h +
+          "%\n\n"
+        return message
+      })
+  },
+  {
+    name: BOT_PREFIX + " " + DESCRIPTION_COMMAND,
+    description: "Sends the description of the coin.",
+    usage: "[!" + BOT_PREFIX + " " + DESCRIPTION_COMMAND + " coin_name]",
+    verb: DESCRIPTION_COMMAND,
+    generateMessages: async inputs =>
+      forEachCoin(inputs, async coinId => {
+        const response = await CoinGeckoClient.coins.fetch(coinId, {
+          localization: false,
+          tickers: false,
+          market_data: false,
+          community_data: false,
+          developer_data: false,
+          sparkline: false
+        })
+        if (!response.success) throw "fetch error"
+        const regex = /(<([^>]+)>)/ig
+        return response.data.description.en.replace(regex, "")
+      })
+  },
+]
 
 async function forEachCoin(coins, createMessage) {
-  let messages = [];
+  let messages = []
   for (const coin of coins) {
     if (coin != "") {
-      const ids = await getIds(coin);
+      const ids = await getIds(coin)
       if (ids === undefined || ids.length == 0) {
-        messages.push(Promise.resolve("No coins found with: " + coin));
+        messages.push(Promise.resolve("No coins found with: " + coin))
       }
       for (const id of ids) {
-        messages.push(createMessage(id));
+        messages.push(createMessage(id))
       }
     }
   }
   if (messages.length == 0)
     messages.push(
       Promise.resolve("You need to add some coin to the command sir")
-    );
-  return messages;
+    )
+  return messages
 }
 
-module.exports.BOT_PREFIX = BOT_PREFIX;
+module.exports.BOT_PREFIX = BOT_PREFIX
